@@ -20,12 +20,19 @@ func _gui(delta):
 		print("Button clicked");
 	
 	if GUI.buttonpress("buttonpress"):
-		print("Button continuously pressed");
+		GUI.label("Button continuously pressed");
 	
 	#Toggle
 	show = GUI.toggle("toggle", show);
 	if show:
 		GUI.label("Toggle on");
+	
+	#Boxes - VBoxContainer, HBoxContainer, GridContainer...
+	GUI.hbox();
+	for i in 3:
+		if GUI.button(str("button ", i)):
+			print("Button ", i, " pressed");
+	GUI.end();
 	
 	#LineEdit
 	text = GUI.line(text);
