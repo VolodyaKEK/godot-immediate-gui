@@ -37,6 +37,7 @@ func _gui(delta):
 	float_value = GUI.spin(float_value, 0.0, 1.0);
 	
 	#Progress bar
+	GUI.size.x = 200;
 	GUI.progress(float_value);
 	
 	#Utility
