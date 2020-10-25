@@ -3,6 +3,7 @@
 - Add `GUI.gd` in your project
 - Add `GUI.gd` as autoload
 # Example
+![Alt text](/screenshot.png?raw=true "Godot Immediate GUI")
 ```gdscript
 var show = false;
 var text = "text";
