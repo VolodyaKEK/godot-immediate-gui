@@ -6,13 +6,13 @@ const used = [];
 var tooltip := "";
 var size := Vector2();
 
-func _ready():
-	call_deferred("raise");
+func _init():
 	mouse_filter = MOUSE_FILTER_IGNORE;
 
 func _process(delta):
 	used.clear();
 	boxes.clear();
+	raise();
 	get_parent().propagate_call("_gui", [delta]);
 	for c in controls:
 		if !(c in used):
