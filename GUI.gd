@@ -61,7 +61,7 @@ func _toggle(type, text, state):
 	return b.pressed;
 
 func label(text):
-	_get_control(GUILabel, text);
+	_get_control(Label, text);
 func button(text):
 	return _get_control(GUIButton, text).changed.get_changed();
 func buttonpress(text):
@@ -138,8 +138,6 @@ func scroll():
 	boxes.append(box);
 	return true;
 
-class GUILabel extends Label:
-	pass
 class GUIBaseButton extends Button:
 	var changed = GUIStateChanged.new(self, "pressed");
 class GUIButton extends GUIBaseButton:
@@ -162,9 +160,6 @@ class GUIOptions extends OptionButton:
 				add_item(str(text));
 class GUILine extends LineEdit:
 	var changed = GUIStateChanged.new(self, "text_changed");
-#class GUICanvas extends ColorRect:
-#	func _process(_delta):
-#		update();
 class GUIColorPicker extends ColorPickerButton:
 	var changed = GUIStateChanged.new(self, "color_changed");
 class GUISpin extends SpinBox:
