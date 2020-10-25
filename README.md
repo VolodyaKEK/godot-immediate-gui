@@ -7,8 +7,8 @@
 var show = false;
 var text = "text";
 var color = Color.white;
-var integer = 0;
-var float_value = 0.2;
+var integer := 0;
+var float_value := 0.2;
 
 func _gui(delta):
 	#Label
