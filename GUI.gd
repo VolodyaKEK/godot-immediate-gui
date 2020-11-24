@@ -1,51 +1,79 @@
-extends VBoxContainer
+extends Control
 
 const boxes = [];
-const controls = [];
-const used = [];
-var tooltip := "";
-var size := Vector2();
+var used = [];
+var notused = [];
+var layout := true;
+var _layout := VBoxContainer.new();
+
+var _last_control;
+
+var default = {
+	BaseButton:{
+		"action_mode":BaseButton.ACTION_MODE_BUTTON_PRESS,
+		"mouse_default_cursor_shape":CURSOR_POINTING_HAND,
+	},
+};
+var property = {};
 
 func _init():
 	mouse_filter = MOUSE_FILTER_IGNORE;
+	_layout.mouse_filter = MOUSE_FILTER_IGNORE;
+
+func _ready():
+	add_child(_layout);
+	set_anchors_and_margins_preset(PRESET_WIDE);
+	_layout.set_anchors_and_margins_preset(PRESET_WIDE);
 
 func _process(delta):
-	used.clear();
-	boxes.clear();
-	raise();
 	get_parent().propagate_call("_gui", [delta]);
-	for c in controls:
-		if !(c in used):
-			reparent(c, null);
-			controls.remove(controls.find(c));
-			c.free();
+	
+	raise();
+	layout = true;
+	assert(boxes.size() == 0, "Not all containers are closed. Use GUI.end() to close containers.");
+	boxes.clear();
+	
+	for c in notused:
+		if c != null:
+			c.queue_free();
+	notused.clear();
+	
+	var t = notused;
+	notused = used;
+	used = t;
+
+func printvar(node, v):
+	label(str(node.name, " ", "[", node.get_instance_id(), "] ", v, ": ", node.get(v)));
 
 func _get_control(type, text=null):
 	var _c;
-	for c in controls:
-		if c is type && !(c in used):
+	for c in notused:
+		if c is type:
 			_c = c;
+			c.base.revert();
+			notused.erase(c);
 			break;
 	if _c == null:
 		_c = type.new();
-		controls.append(_c);
-	_c.size_flags_horizontal = 0;
-	if _c is BaseButton:
-		_c.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS;
-		_c.mouse_default_cursor_shape = CURSOR_POINTING_HAND;
 	used.append(_c);
-	reparent(_c, self if boxes.size() == 0 else boxes[-1]);
+	reparent(_c, (_layout if layout else self) if boxes.size() == 0 else boxes[-1]);
 	if text != null:
 		_c.text = str(text);
 	
-	_c.rect_min_size = size;
-	size = Vector2();
+	_c.rect_size = Vector2();
 	
-	_c.hint_tooltip = tooltip;
-	tooltip = "";
+	for type in default.keys():
+		if _c is type:
+			var defs = default[type];
+			for p in defs.keys():
+				_c.base.set_property(p, defs[p]);
+	for p in property.keys():
+		_c.base.set_property(p, property[p]);
+	property.clear();
 	
+	_last_control = _c;
 	return _c;
-func reparent(node, new_parent):
+func reparent(node:Node, new_parent:Node):
 	var p = node.get_parent();
 	if p == new_parent:
 		node.raise();
@@ -57,18 +85,18 @@ func reparent(node, new_parent):
 
 func _toggle(type, text, state):
 	var b = _get_control(type, text);
-	b.pressed = !state if b.changed.get_changed() else state;
+	b.pressed = !state if b.base.get_changed() else state;
 	return b.pressed;
 
 func label(text):
-	_get_control(Label, text);
+	_get_control(GUILabel, text);
 func button(text):
-	return _get_control(GUIButton, text).changed.get_changed();
+	return _get_control(GUIButton, text).base.get_changed();
 func buttonpress(text):
 	var b = _get_control(GUIButton, text);
-	b.changed.get_changed();
+	b.base.get_changed();
 	return b.pressed;
-	
+
 func toggle(text, state:bool):
 	return _toggle(GUIToggle, text, state);
 func checkbox(text, state:bool):
@@ -79,78 +107,112 @@ func checkbutton(text, state:bool):
 func options(selected:int, options:Array):
 	var b = _get_control(GUIOptions);
 	b.set_options(options);
-	if !b.changed.get_changed():
+	if !b.base.get_changed():
 		b.selected = selected;
 	return b.selected;
 
 func pickcolor(color:Color, edit_alpha:bool=true):
-	var c = _get_control(GUIColorPicker);
-	c.rect_min_size.x = c.rect_size.y*2;
+	var c = _get_control(GUIPickColor);
 	c.edit_alpha = edit_alpha;
+	#workaround
+	c.rect_min_size.x = c.rect_size.y;
+	#---
 	c.get_popup().rect_global_position = c.rect_global_position + Vector2(0, c.rect_size.y);
-	if !c.changed.get_changed():
+	if !c.base.get_changed():
 		c.color = color;
 	return c.color;
-func progress(value:float):
-	var c = _get_control(ProgressBar);
+func progress(value:float, percent_visible:bool=true):
+	var c = _get_control(GUIProgress);
+	c.percent_visible = percent_visible;
 	c.min_value = 0;
 	c.max_value = 100;
 	c.value = value*100;
-func spin(value, min_value, max_value):
+func spin(value, min_value, max_value, step=null):
 	var c = _get_control(GUISpin);
 	c.min_value = min_value;
 	c.max_value = max_value;
-	c.step = 1.0 if value is int else 0.001;
-	if !c.changed.get_changed():
+	c.step = (1.0 if value is int else 0.001) if step == null else step;
+	if !c.base.get_changed() && c.value != value:
 		c.value = value;
 	return c.value;
 func line(text:String):
 	var l = _get_control(GUILine);
-	if !l.changed.get_changed() && l.text != text:
+	if !l.base.get_changed() && l.text != text:
 		l.text = text;
 	return l.text;
 
-func hbox():
-	var box = _get_control(HBoxContainer);
+func _get_box(type):
+	var box = _get_control(type);
 	boxes.append(box);
+	return box;
+func control():
+	_get_box(GUIControl);
 	return true;
-func vbox():
-	var box = _get_control(VBoxContainer);
-	boxes.append(box);
+func hbox(separation=null):
+	var box = _get_box(GUIHBox);
+	box.set("custom_constants/separation", separation);
 	return true;
-func grid(columns:int):
-	var grid = _get_control(GridContainer);
-	grid.columns = columns;
-	boxes.append(grid);
+func vbox(separation=null):
+	var box = _get_box(GUIVBox);
+	box.set("custom_constants/separation", separation);
+	return true;
+func grid(columns:int, vseparation=null, hseparation=null):
+	var box = _get_box(GUIGrid);
+	box.columns = columns;
+	box.set("custom_constants/vseparation", vseparation);
+	box.set("custom_constants/hseparation", hseparation);
+	return true;
+func panel():
+	_get_box(GUIPanel);
 	return true;
 func margin(left:int=0, top:int=0, right:int=0, bottom:int=0):
-	var box = _get_control(MarginContainer);
+	var box = _get_box(GUIMargin);
 	box.set("custom_constants/margin_left", left);
 	box.set("custom_constants/margin_top", top);
 	box.set("custom_constants/margin_right", right);
 	box.set("custom_constants/margin_bottom", bottom);
-	boxes.append(box);
+	return true;
+func center():
+	_get_box(GUICenter);
+	return true;
+func scroll():
+	_get_box(GUIScroll);
 	return true;
 func end():
 	boxes.pop_back();
-func scroll():
-	var box = _get_control(ScrollContainer);
-	boxes.append(box);
-	return true;
 
+class GUIControl extends Control:
+	var base = GUIBase.new(self);
+class GUIVBox extends VBoxContainer:
+	var base = GUIBase.new(self);
+class GUIHBox extends HBoxContainer:
+	var base = GUIBase.new(self);
+class GUIGrid extends GridContainer:
+	var base = GUIBase.new(self);
+class GUIPanel extends PanelContainer:
+	var base = GUIBase.new(self);
+class GUIMargin extends MarginContainer:
+	var base = GUIBase.new(self);
+class GUICenter extends CenterContainer:
+	var base = GUIBase.new(self);
+class GUIScroll extends ScrollContainer:
+	var base = GUIBase.new(self);
+
+class GUILabel extends Label:
+	var base = GUIBase.new(self);
 class GUIBaseButton extends Button:
-	var changed = GUIStateChanged.new(self, "pressed");
+	var base = GUIBase.new(self, "pressed");
 class GUIButton extends GUIBaseButton:
 	pass
 class GUIToggle extends GUIBaseButton:
 	func _init():
 		toggle_mode = true;
 class GUICheckBox extends CheckBox:
-	var changed = GUIStateChanged.new(self, "pressed");
+	var base = GUIBase.new(self, "pressed");
 class GUICheckButton extends CheckButton:
-	var changed = GUIStateChanged.new(self, "pressed");
+	var base = GUIBase.new(self, "pressed");
 class GUIOptions extends OptionButton:
-	var changed = GUIStateChanged.new(self, "item_selected");
+	var base = GUIBase.new(self, "item_selected");
 	var options = [];
 	func set_options(_options):
 		if options != _options:
@@ -159,16 +221,17 @@ class GUIOptions extends OptionButton:
 			for text in options:
 				add_item(str(text));
 class GUILine extends LineEdit:
-	var changed = GUIStateChanged.new(self, "text_changed");
-class GUIColorPicker extends ColorPickerButton:
-	var changed = GUIStateChanged.new(self, "color_changed");
+	var base = GUIBase.new(self, "text_changed");
+class GUIPickColor extends ColorPickerButton:
+	var base = GUIBase.new(self, "color_changed");
+class GUIProgress extends ProgressBar:
+	var base = GUIBase.new(self);
 class GUISpin extends SpinBox:
-	var changed = GUIStateChanged.new(self, "value_changed");
+	var base = GUIBase.new(self, "value_changed");
 
-class GUIStateChanged:
+class GUIBase:
+	var node;
 	var changed:bool;
-	func _init(node, _signal):
-		node.connect(_signal, self, "_changed");
 	func _changed(_v=null):
 		changed = true;
 	func get_changed():
@@ -176,3 +239,23 @@ class GUIStateChanged:
 			changed = false;
 			return true;
 		return false;
+	var defs = {};
+	var edited = [];
+	func _init(_node, _signal=null):
+		node = _node;
+		if _signal != null:
+			node.connect(_signal, self, "_changed");
+		for p in node.get_property_list():
+			if p.name == "rect_global_position":
+				continue;
+			defs[p.name] = node.get(p.name);
+	func set_property(p, v):
+		if p != "rect_global_position":
+			edited.append(p);
+		node.set(p, v);
+	func revert():
+		for p in edited:
+			var def = defs.get(p);
+			if node.get(p) != def:
+				node.set(p, def);
+		edited.clear();
