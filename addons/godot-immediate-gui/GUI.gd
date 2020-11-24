@@ -1,6 +1,6 @@
 extends Control
 
-const boxes = [];
+var boxes = [];
 var used = [];
 var notused = [];
 var layout := true;
@@ -8,8 +8,8 @@ var _layout := VBoxContainer.new();
 
 var _last_control;
 
-const default = {};
-const property = {};
+var default = {};
+var property = {};
 
 func _init():
 	default[Control] = {
