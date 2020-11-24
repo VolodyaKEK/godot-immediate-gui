@@ -8,19 +8,18 @@ var _layout := VBoxContainer.new();
 
 var _last_control;
 
-var default = {
-	Control:{
-		"size_flags_horizontal":0,
-		"size_flags_vertical":0,
-	},
-	BaseButton:{
-		"action_mode":BaseButton.ACTION_MODE_BUTTON_PRESS,
-		"mouse_default_cursor_shape":CURSOR_POINTING_HAND,
-	},
-};
-var property = {};
+const default = {};
+const property = {};
 
 func _init():
+	default[Control] = {
+		"size_flags_horizontal":0,
+		"size_flags_vertical":0,
+	};
+	default[BaseButton] = {
+		"action_mode":BaseButton.ACTION_MODE_BUTTON_PRESS,
+		"mouse_default_cursor_shape":CURSOR_POINTING_HAND,
+	};
 	mouse_filter = MOUSE_FILTER_IGNORE;
 	_layout.mouse_filter = MOUSE_FILTER_IGNORE;
 
