@@ -56,6 +56,8 @@ func _get_control(type, text=null):
 	if _c == null:
 		_c = type.new();
 	used.append(_c);
+# warning-ignore:incompatible_ternary
+# warning-ignore:incompatible_ternary
 	reparent(_c, (_layout if layout else self) if boxes.size() == 0 else boxes[-1]);
 	if text != null:
 		_c.text = str(text);
