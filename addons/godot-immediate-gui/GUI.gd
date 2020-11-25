@@ -8,7 +8,7 @@ var _layout := VBoxContainer.new();
 
 var _last_control;
 
-var default = {
+var _default = {
 	Control:{
 		"size_flags_horizontal":0,
 		"size_flags_vertical":0,
@@ -19,6 +19,24 @@ var default = {
 	},
 };
 var property = {};
+
+func clear_default():
+	_default.clear();
+func add_default(type, property, value):
+	var props = _default.get(type);
+	if props == null:
+		props = {};
+		_default[type] = props;
+	props[property] = value;
+func remove_default(type, property):
+	var props = _default.get(type);
+	assert(props != null, str("There is no default values for type \"", type, "\""));
+	if props == null:
+		return;
+	var has_property = props.has(property);
+	assert(has_property, str("Can't remove property \"", property, "\" from type \"", type, "\", property not set"));
+	if has_property:
+		props.erase(property);
 
 func _init():
 	mouse_filter = MOUSE_FILTER_IGNORE;
@@ -68,9 +86,9 @@ func _get_control(type, text=null):
 	
 	_c.rect_size = Vector2();
 	
-	for type in default.keys():
+	for type in _default.keys():
 		if _c is type:
-			var defs = default[type];
+			var defs = _default[type];
 			for p in defs.keys():
 				_c.base.set_property(p, defs[p]);
 	for p in property.keys():
