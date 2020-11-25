@@ -17,6 +17,9 @@ var _default = {
 		"action_mode":BaseButton.ACTION_MODE_BUTTON_PRESS,
 		"mouse_default_cursor_shape":CURSOR_POINTING_HAND,
 	},
+	ColorPickerButton:{
+		"rect_min_size":Vector2(20, 20),
+	},
 };
 var property = {};
 
@@ -138,9 +141,6 @@ func options(selected:int, options:Array):
 func pickcolor(color:Color, edit_alpha:bool=true):
 	var c = _get_control(GUIPickColor);
 	c.edit_alpha = edit_alpha;
-	#workaround
-	c.rect_min_size.x = c.rect_size.y;
-	#---
 	c.get_popup().rect_global_position = c.rect_global_position + Vector2(0, c.rect_size.y);
 	if !c.base.get_changed():
 		c.color = color;
