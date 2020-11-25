@@ -6,12 +6,6 @@ var color = Color.white;
 var integer := 0;
 var float_value := 0.2;
 
-func _ready():
-	GUI.default[Control] = {
-		"size_flags_horizontal":0,
-		"size_flags_vertical":0,
-	};
-
 func _gui(delta):
 	#Label
 	GUI.label(str("FPS: ", Engine.get_frames_per_second()));
