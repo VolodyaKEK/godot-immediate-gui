@@ -25,12 +25,14 @@ var property = {};
 
 func clear_default():
 	_default.clear();
+# warning-ignore:shadowed_variable
 func add_default(type, property, value):
 	var props = _default.get(type);
 	if props == null:
 		props = {};
 		_default[type] = props;
 	props[property] = value;
+# warning-ignore:shadowed_variable
 func remove_default(type, property=null):
 	var props = _default.get(type);
 	assert(props != null, str("There is no default values for type \"", type, "\""));
