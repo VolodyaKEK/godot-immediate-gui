@@ -31,10 +31,11 @@ func add_default(type, property, value):
 		props = {};
 		_default[type] = props;
 	props[property] = value;
-func remove_default(type, property):
+func remove_default(type, property=null):
 	var props = _default.get(type);
 	assert(props != null, str("There is no default values for type \"", type, "\""));
-	if props == null:
+	if property == null:
+		_default.erase(type);
 		return;
 	var has_property = props.has(property);
 	assert(has_property, str("Can't remove property \"", property, "\" from type \"", type, "\", property not set"));
