@@ -62,8 +62,7 @@ func _process(delta):
 	boxes.clear();
 	
 	for c in notused:
-		if c != null:
-			c.queue_free();
+		c.queue_free();
 	notused.clear();
 	
 	var t = notused;
