@@ -271,13 +271,10 @@ class GUIBase:
 		node = _node;
 		if _signal != null:
 			node.connect(_signal, self, "_changed");
-		for p in node.get_property_list():
-			if p.name == "rect_global_position":
-				continue;
-			defs[p.name] = node.get(p.name);
 	func set_property(p, v):
-		if p != "rect_global_position":
-			edited.append(p);
+		if !defs.has(p):
+			defs[p] = node.get(p);
+		edited.append(p);
 		node.set(p, v);
 	func revert():
 		for p in edited:
